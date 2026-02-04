@@ -1,0 +1,253 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Basic metadata -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Add Listing</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card" href="{{ url_for('catalog', username=username) }}">Cars</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Welcome</span>
+            <span class="profile-name">
+              {% if user %}{{ user["first_name"] }} {{ user["last_name"] }}{% else %}Guest{% endif %}
+            </span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('messages') }}">
+              Messages
+              {% if unread_count %}
+                <span class="badge-count">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+            {% if user and user["is_admin"] %}
+              <a class="profile-link" href="{{ url_for('admin_panel') }}">Admin</a>
+            {% endif %}
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content form-layout">
+        <section class="form-card">
+          <h1>Add a car listing</h1>
+          <p>Fill in the details below. All text is in English as requested.</p>
+
+          {% with messages = get_flashed_messages() %}
+            {% if messages %}
+              <ul class="flash">
+                {% for message in messages %}
+                  <li>{{ message }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          {% endwith %}
+
+          <form class="listing-form" method="post" enctype="multipart/form-data">
+            <div class="form-grid">
+              <label>
+                Price (EUR)
+                <input
+                  type="number"
+                  name="price"
+                  placeholder="25000"
+                  value="{{ request.form.get('price', '') }}"
+                  required
+                />
+              </label>
+              <label>
+                Year
+                <select name="year" required>
+                  <option value="" selected disabled>Select year</option>
+                  {% for y in range(2026, 1984, -1) %}
+                    <option value="{{ y }}" {% if request.form.get('year') == y|string %}selected{% endif %}>{{ y }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                Mileage (km)
+                <input
+                  type="number"
+                  name="mileage"
+                  placeholder="42000"
+                  value="{{ request.form.get('mileage', '') }}"
+                  required
+                />
+              </label>
+              <label>
+                Make
+                <select name="make" id="make-select" required>
+                  <option value="" selected disabled>Select make</option>
+                  <option value="Audi" {% if request.form.get('make') == 'Audi' %}selected{% endif %}>Audi</option>
+                  <option value="BMW" {% if request.form.get('make') == 'BMW' %}selected{% endif %}>BMW</option>
+                  <option value="Mercedes-Benz" {% if request.form.get('make') == 'Mercedes-Benz' %}selected{% endif %}>Mercedes-Benz</option>
+                  <option value="Volkswagen" {% if request.form.get('make') == 'Volkswagen' %}selected{% endif %}>Volkswagen</option>
+                  <option value="Tesla" {% if request.form.get('make') == 'Tesla' %}selected{% endif %}>Tesla</option>
+                  <option value="Skoda" {% if request.form.get('make') == 'Skoda' %}selected{% endif %}>Skoda</option>
+                  <option value="Volvo" {% if request.form.get('make') == 'Volvo' %}selected{% endif %}>Volvo</option>
+                  <option value="Peugeot" {% if request.form.get('make') == 'Peugeot' %}selected{% endif %}>Peugeot</option>
+                  <option value="Hyundai" {% if request.form.get('make') == 'Hyundai' %}selected{% endif %}>Hyundai</option>
+                  <option value="Renault" {% if request.form.get('make') == 'Renault' %}selected{% endif %}>Renault</option>
+                  <option value="Opel" {% if request.form.get('make') == 'Opel' %}selected{% endif %}>Opel</option>
+                  <option value="Seat" {% if request.form.get('make') == 'Seat' %}selected{% endif %}>Seat</option>
+                </select>
+              </label>
+              <label>
+                Model
+                <select
+                  name="model"
+                  id="model-select"
+                  data-selected="{{ request.form.get('model', '') }}"
+                  required
+                  disabled
+                >
+                  <option value="" selected disabled>Select model</option>
+                </select>
+              </label>
+              <label>
+                Color
+                <select name="color" required>
+                  <option value="" selected disabled>Select color</option>
+                  <option value="Black" {% if request.form.get('color') == 'Black' %}selected{% endif %}>Black</option>
+                  <option value="White" {% if request.form.get('color') == 'White' %}selected{% endif %}>White</option>
+                  <option value="Gray" {% if request.form.get('color') == 'Gray' %}selected{% endif %}>Gray</option>
+                  <option value="Silver" {% if request.form.get('color') == 'Silver' %}selected{% endif %}>Silver</option>
+                  <option value="Blue" {% if request.form.get('color') == 'Blue' %}selected{% endif %}>Blue</option>
+                  <option value="Red" {% if request.form.get('color') == 'Red' %}selected{% endif %}>Red</option>
+                  <option value="Green" {% if request.form.get('color') == 'Green' %}selected{% endif %}>Green</option>
+                  <option value="Yellow" {% if request.form.get('color') == 'Yellow' %}selected{% endif %}>Yellow</option>
+                  <option value="Brown" {% if request.form.get('color') == 'Brown' %}selected{% endif %}>Brown</option>
+                  <option value="Orange" {% if request.form.get('color') == 'Orange' %}selected{% endif %}>Orange</option>
+                </select>
+              </label>
+              <label>
+                Fuel
+                <select name="fuel" required>
+                  <option value="" selected disabled>Select fuel</option>
+                  <option value="Gasoline" {% if request.form.get('fuel') == 'Gasoline' %}selected{% endif %}>Gasoline</option>
+                  <option value="Diesel" {% if request.form.get('fuel') == 'Diesel' %}selected{% endif %}>Diesel</option>
+                  <option value="Hybrid" {% if request.form.get('fuel') == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+                  <option value="Electric" {% if request.form.get('fuel') == 'Electric' %}selected{% endif %}>Electric</option>
+                  <option value="LPG" {% if request.form.get('fuel') == 'LPG' %}selected{% endif %}>LPG</option>
+                </select>
+              </label>
+              <label>
+                Transmission
+                <select name="transmission" required>
+                  <option value="" selected disabled>Select transmission</option>
+                  <option value="Automatic" {% if request.form.get('transmission') == 'Automatic' %}selected{% endif %}>Automatic</option>
+                  <option value="Manual" {% if request.form.get('transmission') == 'Manual' %}selected{% endif %}>Manual</option>
+                  <option value="Semi-automatic" {% if request.form.get('transmission') == 'Semi-automatic' %}selected{% endif %}>Semi-automatic</option>
+                </select>
+              </label>
+              <label>
+                Body style
+                <select name="body_style" required>
+                  <option value="" selected disabled>Select body style</option>
+                  <option value="Sedan" {% if request.form.get('body_style') == 'Sedan' %}selected{% endif %}>Sedan</option>
+                  <option value="SUV" {% if request.form.get('body_style') == 'SUV' %}selected{% endif %}>SUV</option>
+                  <option value="Hatchback" {% if request.form.get('body_style') == 'Hatchback' %}selected{% endif %}>Hatchback</option>
+                  <option value="Coupe" {% if request.form.get('body_style') == 'Coupe' %}selected{% endif %}>Coupe</option>
+                  <option value="Convertible" {% if request.form.get('body_style') == 'Convertible' %}selected{% endif %}>Convertible</option>
+                  <option value="Wagon" {% if request.form.get('body_style') == 'Wagon' %}selected{% endif %}>Wagon</option>
+                  <option value="Pickup" {% if request.form.get('body_style') == 'Pickup' %}selected{% endif %}>Pickup</option>
+                  <option value="Van" {% if request.form.get('body_style') == 'Van' %}selected{% endif %}>Van</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="full-width">
+              Description
+              <textarea
+                name="description"
+                rows="4"
+                placeholder="Full service history, new tires..."
+                required
+              >{{ request.form.get("description", "") }}</textarea>
+            </label>
+
+            <label class="full-width">
+              Photos (max 15)
+              <input type="file" name="images" accept=".jpg,.jpeg,.png" multiple />
+            </label>
+
+            <button class="btn" type="submit">Publish</button>
+          </form>
+        </section>
+      </main>
+    </div>
+    <script>
+      const modelsByMake = {
+        Audi: ["A3", "A4", "A6", "Q3", "Q5", "Q7"],
+        BMW: ["1 Series", "3 Series", "5 Series", "X1", "X3", "X5"],
+        "Mercedes-Benz": ["A-Class", "C-Class", "E-Class", "S-Class", "GLA", "GLE"],
+        Volkswagen: ["Golf", "Passat", "Tiguan", "Touareg", "Polo"],
+        Tesla: ["Model 3", "Model S", "Model X", "Model Y"],
+        Skoda: ["Octavia", "Superb", "Kodiaq", "Karoq", "Fabia"],
+        Volvo: ["XC40", "XC60", "XC90", "S60", "S90"],
+        Peugeot: ["208", "308", "3008", "508"],
+        Hyundai: ["i20", "i30", "Tucson", "Santa Fe", "Ioniq 5"],
+        Renault: ["Clio", "Megane", "Captur", "Kadjar"],
+        Opel: ["Astra", "Corsa", "Insignia", "Mokka"],
+        Seat: ["Ibiza", "Leon", "Ateca", "Arona"],
+      };
+
+      const makeSelect = document.getElementById("make-select");
+      const modelSelect = document.getElementById("model-select");
+
+      function resetModels() {
+        modelSelect.innerHTML = '<option value="" selected disabled>Select model</option>';
+        modelSelect.disabled = true;
+      }
+
+      function populateModels(make) {
+        resetModels();
+        const models = modelsByMake[make] || [];
+        models.forEach((model) => {
+          const option = document.createElement("option");
+          option.value = model;
+          option.textContent = model;
+          modelSelect.appendChild(option);
+        });
+        modelSelect.disabled = models.length === 0;
+        const selected = modelSelect.dataset.selected;
+        if (selected) {
+          modelSelect.value = selected;
+        }
+      }
+
+      if (makeSelect && modelSelect) {
+        makeSelect.addEventListener("change", (event) => {
+          populateModels(event.target.value);
+        });
+        if (makeSelect.value) {
+          populateModels(makeSelect.value);
+        }
+      }
+    </script>
+  </body>
+</html>

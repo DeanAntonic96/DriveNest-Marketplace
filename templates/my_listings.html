@@ -1,0 +1,309 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Basic metadata -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - My Listings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card" href="{{ url_for('catalog', username=username) }}">Cars</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Welcome</span>
+            <span class="profile-name">
+              {% if user %}{{ user["first_name"] }} {{ user["last_name"] }}{% else %}Guest{% endif %}
+            </span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('messages') }}">
+              Messages
+              {% if unread_count %}
+                <span class="badge-count">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+            {% if user and user["is_admin"] %}
+              <a class="profile-link" href="{{ url_for('admin_panel') }}">Admin</a>
+            {% endif %}
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="section-header">
+          <div>
+            <h1>My listings</h1>
+            <p>All cars you published appear here.</p>
+          </div>
+          <a class="btn pill-btn" href="{{ url_for('add_listing', username=username) }}">Add listing</a>
+        </section>
+
+        <section class="catalog-grid">
+          {% if cars %}
+            {% for car in cars %}
+              <article class="car-card">
+                {% if car["image_path"] %}
+                  <img
+                    class="car-photo-img"
+                    src="{{ url_for('static', filename=car['image_path']) }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename=default_car_image) }}';"
+                    alt="{{ car['make'] }} {{ car['model'] }}"
+                  />
+                {% else %}
+                  <img class="car-photo-img" src="{{ url_for('static', filename=default_car_image) }}" alt="Default car image" />
+                {% endif %}
+                <div class="car-body">
+                  <h3>{{ car["make"] }} {{ car["model"] }} {{ car["year"] }}</h3>
+                  {% if badge_map.get(car["id"]) %}
+                    <div class="badges">
+                      {% for badge in badge_map.get(car["id"]) %}
+                        <span class="badge">{{ badge }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                  <p class="car-meta">
+                    {{ "{:,}".format(car["mileage"]).replace(",", ".") }} km
+                  </p>
+                  {% set rating = rating_map.get(car["user_id"]) %}
+                  {% if rating %}
+                    <p class="car-meta">Seller rating: {{ "%.1f"|format(rating[0]) }}/5</p>
+                  {% endif %}
+                  <p class="car-meta">{{ car["city"] or "-" }}</p>
+                  <div class="car-footer">
+                    <span class="price">€{{ "{:,}".format(car["price"]).replace(",", ".") }}</span>
+                    <a
+                      class="btn ghost"
+                      href="{{ url_for('car_details', car_id=car['id'], username=username) }}"
+                    >
+                      Details
+                    </a>
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No listings yet</h3>
+              <p>Create your first listing to see it here.</p>
+              <a class="btn" href="{{ url_for('add_listing', username=username) }}">Add listing</a>
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="section-header" style="margin-top: 32px;">
+          <div>
+            <h1>Completed transactions</h1>
+            <p>Listings moved from active catalog.</p>
+          </div>
+        </section>
+
+        <section class="catalog-grid">
+          {% if completed_cars %}
+            {% for car in completed_cars %}
+              <article class="car-card">
+                {% if car["image_path"] %}
+                  <img
+                    class="car-photo-img"
+                    src="{{ url_for('static', filename=car['image_path']) }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename=default_car_image) }}';"
+                    alt="{{ car['make'] }} {{ car['model'] }}"
+                  />
+                {% else %}
+                  <img class="car-photo-img" src="{{ url_for('static', filename=default_car_image) }}" alt="Default car image" />
+                {% endif %}
+                <div class="car-body">
+                  <h3>{{ car["make"] }} {{ car["model"] }} {{ car["year"] }}</h3>
+                  {% if badge_map.get(car["id"]) %}
+                    <div class="badges">
+                      {% for badge in badge_map.get(car["id"]) %}
+                        <span class="badge">{{ badge }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                  <p class="car-meta">
+                    {{ "{:,}".format(car["mileage"]).replace(",", ".") }} km
+                  </p>
+                  {% set rating = rating_map.get(car["user_id"]) %}
+                  {% if rating %}
+                    <p class="car-meta">Seller rating: {{ "%.1f"|format(rating[0]) }}/5</p>
+                  {% endif %}
+                  <p class="car-meta">{{ car["city"] or "-" }}</p>
+                  <div class="car-footer">
+                    <span class="price">€{{ "{:,}".format(car["price"]).replace(",", ".") }}</span>
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No completed listings yet</h3>
+              <p>Move a listing to completed to see it here.</p>
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="section-header" style="margin-top: 24px;">
+          <div>
+            <h1>Completed sales</h1>
+            <p>Transactions you completed as a seller.</p>
+          </div>
+        </section>
+
+        <section class="transaction-list">
+          {% if transactions_sold %}
+            {% for tx in transactions_sold %}
+              <div class="transaction-card">
+                <div>
+                  <strong>{{ tx["make"] }} {{ tx["model"] }} {{ tx["year"] }}</strong>
+                  <div class="transaction-meta">
+                    Buyer:
+                    {% set buyer = profiles.get(tx["buyer_id"]) %}
+                    {% if buyer %}
+                      <a href="{{ url_for('buyer_profile', buyer_id=buyer['id'], username=username) }}">
+                        {{ buyer["first_name"] }} {{ buyer["last_name"] }}
+                      </a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                  <div class="transaction-meta">Status: {{ tx["status"] }}</div>
+                  <div class="transaction-meta">Completed: {{ tx["completed_at"] }}</div>
+                </div>
+                {% set rating = rating_tx_map.get(tx["id"]) %}
+                {% if rating %}
+                  <div class="rating-grid">
+                    <div>Reliability: {{ rating[1] }}/5</div>
+                    <div>Accuracy: {{ rating[2] }}/5</div>
+                    <div>Communication: {{ rating[3] }}/5</div>
+                    <div>Product: {{ rating[4] }}/5</div>
+                    {% if rating[5] %}
+                      <div>Comment: {{ rating[5] }}</div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="transaction-meta">Not rated yet</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No completed sales yet</h3>
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="section-header" style="margin-top: 24px;">
+          <div>
+            <h1>Completed purchases</h1>
+            <p>Transactions you completed as a buyer.</p>
+          </div>
+        </section>
+
+        <section class="transaction-list">
+          {% if transactions_bought %}
+            {% for tx in transactions_bought %}
+              <div class="transaction-card">
+                <div>
+                  <strong>{{ tx["make"] }} {{ tx["model"] }} {{ tx["year"] }}</strong>
+                  <div class="transaction-meta">
+                    Seller:
+                    {% set seller = profiles.get(tx["seller_id"]) %}
+                    {% if seller %}
+                      <a href="{{ url_for('seller_profile', seller_id=seller['id'], username=username) }}">
+                        {{ seller["first_name"] }} {{ seller["last_name"] }}
+                      </a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                  <div class="transaction-meta">Status: {{ tx["status"] }}</div>
+                  <div class="transaction-meta">Completed: {{ tx["completed_at"] }}</div>
+                </div>
+                {% set rating = rating_tx_map.get(tx["id"]) %}
+                {% if rating %}
+                  <div class="rating-grid">
+                    <div>Reliability: {{ rating[1] }}/5</div>
+                    <div>Accuracy: {{ rating[2] }}/5</div>
+                    <div>Communication: {{ rating[3] }}/5</div>
+                    <div>Product: {{ rating[4] }}/5</div>
+                    {% if rating[5] %}
+                      <div>Comment: {{ rating[5] }}</div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  {% if tx["status"] == "pending" %}
+                    <form method="post" action="{{ url_for('confirm_transaction', transaction_id=tx['id']) }}">
+                      <button class="btn" type="submit">Confirm</button>
+                    </form>
+                    <form method="post" action="{{ url_for('cancel_transaction', transaction_id=tx['id']) }}">
+                      <button class="btn ghost" type="submit">Cancel</button>
+                    </form>
+                  {% elif tx["status"] == "completed" %}
+                    <form class="rating-form" method="post" action="{{ url_for('rate_transaction', transaction_id=tx['id']) }}">
+                      <label>
+                        Reliability
+                        <select name="reliability" required>
+                          {% for r in range(1, 6) %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                        </select>
+                      </label>
+                      <label>
+                        Accuracy
+                        <select name="accuracy" required>
+                          {% for r in range(1, 6) %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                        </select>
+                      </label>
+                      <label>
+                        Communication
+                        <select name="communication" required>
+                          {% for r in range(1, 6) %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                        </select>
+                      </label>
+                      <label>
+                        Product
+                        <select name="product" required>
+                          {% for r in range(1, 6) %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                        </select>
+                      </label>
+                      <label class="full-width">
+                        Comment
+                        <textarea name="comment" rows="3" placeholder="Optional"></textarea>
+                      </label>
+                      <button class="btn" type="submit">Submit rating</button>
+                    </form>
+                  {% else %}
+                    <div class="transaction-meta">Transaction canceled</div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No completed purchases yet</h3>
+            </div>
+          {% endif %}
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

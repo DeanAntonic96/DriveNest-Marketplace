@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Basic metadata -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card" href="{{ url_for('catalog', username=username) }}">Cars</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Welcome</span>
+            <span class="profile-name">
+              {% if user %}{{ user["first_name"] }} {{ user["last_name"] }}{% else %}Guest{% endif %}
+            </span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('messages') }}">
+              Messages
+              {% if unread_count %}
+                <span class="badge-count">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+            {% if user and user["is_admin"] %}
+              <a class="profile-link" href="{{ url_for('admin_panel') }}">Admin</a>
+            {% endif %}
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content profile-layout">
+        <section class="profile-panel">
+          <h1>Profile</h1>
+          <p>Update your info and manage listings.</p>
+
+          <div class="profile-info">
+            <div class="info-row">
+              <span class="info-label">First name</span>
+              <span class="info-value">{% if user %}{{ user["first_name"] }}{% endif %}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Last name</span>
+              <span class="info-value">{% if user %}{{ user["last_name"] }}{% endif %}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Username</span>
+              <span class="info-value">{% if user %}{{ user["username"] }}{% endif %}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Email</span>
+              <span class="info-value">{% if user %}{{ user["email"] }}{% endif %}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Phone</span>
+              <span class="info-value">{% if user and user["phone"] %}{{ user["phone"] }}{% else %}-{% endif %}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">City</span>
+              <span class="info-value">{% if user and user["city"] %}{{ user["city"] }}{% else %}-{% endif %}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Country</span>
+              <span class="info-value">{% if user and user["country"] %}{{ user["country"] }}{% else %}-{% endif %}</span>
+            </div>
+          </div>
+
+          <div class="profile-edit-actions">
+            <button class="btn ghost" type="button" id="edit-toggle">Change</button>
+          </div>
+
+          <form class="profile-edit hidden" id="edit-form" method="post">
+            <label>
+              Phone
+              <input type="text" name="phone" value="{% if user %}{{ user["phone"] or "" }}{% endif %}" />
+            </label>
+            <label>
+              City
+              <input type="text" name="city" value="{% if user %}{{ user["city"] or "" }}{% endif %}" />
+            </label>
+            <label>
+              Country
+              <input type="text" name="country" value="{% if user %}{{ user["country"] or "" }}{% endif %}" />
+            </label>
+            <div class="edit-buttons">
+              <button class="btn" type="submit">Save</button>
+              <button class="btn ghost" type="button" id="edit-cancel">Cancel</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="profile-actions-panel">
+          <div class="action-card">
+            <h2>My listings</h2>
+            <p>See all cars you posted and track their status.</p>
+            <a class="btn ghost" href="{{ url_for('my_listings', username=username) }}">Open</a>
+          </div>
+          <div class="action-card">
+            <h2>Add listing</h2>
+            <p>Create a new car listing with photos and details.</p>
+            <a class="btn ghost" href="{{ url_for('add_listing', username=username) }}">Create</a>
+          </div>
+          <div class="action-card">
+            <h2>Favorites</h2>
+            <p>Saved cars you want to revisit.</p>
+            <a class="btn ghost" href="{{ url_for('favorites', username=username) }}">Open</a>
+          </div>
+          <div class="action-card">
+            <h2>Seller verification</h2>
+            <p>Verify your seller profile for €19.95/month.</p>
+            {% if user and user["verified"] %}
+              <span class="verified-badge">Verified</span>
+            {% else %}
+              <button class="btn" type="button" id="verify-open">Verify</button>
+              <p class="car-meta">Completed sales: {{ completed_sales_count }}</p>
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="section-header" style="margin-top: 24px;">
+          <div>
+            <h1>My cars</h1>
+            <p>All listings you posted.</p>
+          </div>
+        </section>
+
+        <section class="catalog-grid">
+          {% if user_cars %}
+            {% for car in user_cars %}
+              {% if car["status"] == "active" %}
+              <article class="car-card">
+                {% if car["image_path"] %}
+                  <img
+                    class="car-photo-img"
+                    src="{{ url_for('static', filename=car['image_path']) }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename=default_car_image) }}';"
+                    alt="{{ car['make'] }} {{ car['model'] }}"
+                  />
+                {% else %}
+                  <img class="car-photo-img" src="{{ url_for('static', filename=default_car_image) }}" alt="Default car image" />
+                {% endif %}
+                <div class="car-body">
+                  <h3>{{ car["make"] }} {{ car["model"] }} {{ car["year"] }}</h3>
+                  <p class="car-meta">{{ car["status"] }}</p>
+                  <div class="car-footer">
+                    <span class="price">€{{ "{:,}".format(car["price"]).replace(",", ".") }}</span>
+                    <a class="btn ghost" href="{{ url_for('car_details', car_id=car['id'], username=username) }}">
+                      Details
+                    </a>
+                  </div>
+                </div>
+              </article>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No cars yet</h3>
+              <p>Publish a listing to see it here.</p>
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="section-header" style="margin-top: 24px;">
+          <div>
+            <h1>Completed sales</h1>
+            <p>Transactions you completed as a seller.</p>
+          </div>
+        </section>
+
+        <section class="transaction-list">
+          {% if transactions_sold %}
+            {% for tx in transactions_sold %}
+              <div class="transaction-card">
+                <div>
+                  <strong>{{ tx["make"] }} {{ tx["model"] }} {{ tx["year"] }}</strong>
+                  <div class="transaction-meta">
+                    Buyer:
+                    {% set buyer = profiles.get(tx["buyer_id"]) %}
+                    {% if buyer %}
+                      <a href="{{ url_for('buyer_profile', buyer_id=buyer['id'], username=username) }}">
+                        {{ buyer["first_name"] }} {{ buyer["last_name"] }}
+                      </a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                  <div class="transaction-meta">Status: {{ tx["status"] }}</div>
+                  <div class="transaction-meta">Completed: {{ tx["completed_at"] }}</div>
+                </div>
+                {% set rating = rating_map.get(tx["id"]) %}
+                {% if rating %}
+                  <div class="rating-grid">
+                    <div>Reliability: {{ rating[1] }}/5</div>
+                    <div>Accuracy: {{ rating[2] }}/5</div>
+                    <div>Communication: {{ rating[3] }}/5</div>
+                    <div>Product: {{ rating[4] }}/5</div>
+                    {% if rating[5] %}
+                      <div>Comment: {{ rating[5] }}</div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="transaction-meta">Not rated yet</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No completed sales yet</h3>
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="section-header" style="margin-top: 24px;">
+          <div>
+            <h1>Completed purchases</h1>
+            <p>Transactions you completed as a buyer.</p>
+          </div>
+        </section>
+
+        <section class="transaction-list">
+          {% if transactions_bought %}
+            {% for tx in transactions_bought %}
+              <div class="transaction-card">
+                <div>
+                  <strong>{{ tx["make"] }} {{ tx["model"] }} {{ tx["year"] }}</strong>
+                  <div class="transaction-meta">
+                    Seller:
+                    {% set seller = profiles.get(tx["seller_id"]) %}
+                    {% if seller %}
+                      <a href="{{ url_for('seller_profile', seller_id=seller['id'], username=username) }}">
+                        {{ seller["first_name"] }} {{ seller["last_name"] }}
+                      </a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                  <div class="transaction-meta">Status: {{ tx["status"] }}</div>
+                  <div class="transaction-meta">Completed: {{ tx["completed_at"] }}</div>
+                </div>
+                {% set rating = rating_map.get(tx["id"]) %}
+                {% if rating %}
+                  <div class="rating-grid">
+                    <div>Reliability: {{ rating[1] }}/5</div>
+                    <div>Accuracy: {{ rating[2] }}/5</div>
+                    <div>Communication: {{ rating[3] }}/5</div>
+                    <div>Product: {{ rating[4] }}/5</div>
+                    {% if rating[5] %}
+                      <div>Comment: {{ rating[5] }}</div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  {% if tx["status"] == "pending" %}
+                    <form method="post" action="{{ url_for('confirm_transaction', transaction_id=tx['id']) }}">
+                      <button class="btn" type="submit">Confirm</button>
+                    </form>
+                    <form method="post" action="{{ url_for('cancel_transaction', transaction_id=tx['id']) }}">
+                      <button class="btn ghost" type="submit">Cancel</button>
+                    </form>
+                  {% elif tx["status"] == "completed" %}
+                    <form class="rating-form" method="post" action="{{ url_for('rate_transaction', transaction_id=tx['id']) }}">
+                      <label>
+                        Reliability
+                        <select name="reliability" required>
+                          {% for r in range(1, 6) %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                        </select>
+                      </label>
+                      <label>
+                        Accuracy
+                        <select name="accuracy" required>
+                          {% for r in range(1, 6) %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                        </select>
+                      </label>
+                      <label>
+                        Communication
+                        <select name="communication" required>
+                          {% for r in range(1, 6) %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                        </select>
+                      </label>
+                      <label>
+                        Product
+                        <select name="product" required>
+                          {% for r in range(1, 6) %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                        </select>
+                      </label>
+                      <label class="full-width">
+                        Comment
+                        <textarea name="comment" rows="3" placeholder="Optional"></textarea>
+                      </label>
+                      <button class="btn" type="submit">Submit rating</button>
+                    </form>
+                  {% else %}
+                    <div class="transaction-meta">Transaction canceled</div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No completed purchases yet</h3>
+            </div>
+          {% endif %}
+        </section>
+      </main>
+    </div>
+    {% if user and not user["verified"] %}
+      <dialog class="remove-dialog" id="verify-dialog">
+        <div class="remove-dialog-card">
+          <h3>Seller verification</h3>
+          <p>To verify, you must have at least 5 completed transactions and agree to pay €19.95/month.</p>
+          <form method="post" action="{{ url_for('verify_seller') }}" class="complete-form">
+            <label>
+              <input type="checkbox" name="agree" value="yes" required />
+              I agree to pay €19.95/month and confirm I have 5 completed transactions.
+            </label>
+            <button class="btn" type="submit" {% if completed_sales_count < 5 %}disabled{% endif %}>
+              Verify
+            </button>
+          </form>
+          {% if completed_sales_count < 5 %}
+            <p class="car-meta">You need {{ 5 - completed_sales_count }} more completed transactions.</p>
+          {% endif %}
+          <div class="remove-dialog-actions">
+            <button class="btn ghost" type="button" data-close-dialog>Close</button>
+          </div>
+        </div>
+      </dialog>
+    {% endif %}
+    <script>
+      const toggleBtn = document.getElementById("edit-toggle");
+      const cancelBtn = document.getElementById("edit-cancel");
+      const form = document.getElementById("edit-form");
+
+      if (toggleBtn && cancelBtn && form) {
+        toggleBtn.addEventListener("click", () => form.classList.remove("hidden"));
+        cancelBtn.addEventListener("click", () => form.classList.add("hidden"));
+      }
+
+      const verifyOpen = document.getElementById("verify-open");
+      const verifyDialog = document.getElementById("verify-dialog");
+      if (verifyOpen && verifyDialog) {
+        verifyOpen.addEventListener("click", () => verifyDialog.showModal());
+        verifyDialog.addEventListener("click", (event) => {
+          if (event.target === verifyDialog) verifyDialog.close();
+        });
+        const verifyClose = verifyDialog.querySelector("[data-close-dialog]");
+        if (verifyClose) {
+          verifyClose.addEventListener("click", () => verifyDialog.close());
+        }
+      }
+    </script>
+  </body>
+</html>

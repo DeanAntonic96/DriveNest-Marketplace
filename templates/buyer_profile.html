@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Buyer Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card" href="{{ url_for('catalog', username=username) }}">Cars</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Welcome</span>
+            <span class="profile-name">
+              {% if user %}{{ user["first_name"] }} {{ user["last_name"] }}{% else %}Guest{% endif %}
+            </span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('messages') }}">
+              Messages
+              {% if unread_count %}
+                <span class="badge-count">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+            {% if user and user["is_admin"] %}
+              <a class="profile-link" href="{{ url_for('admin_panel') }}">Admin</a>
+            {% endif %}
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="section-header">
+          <div>
+            <h1>{{ buyer["first_name"] }} {{ buyer["last_name"] }}</h1>
+            <p>Completed purchases and status.</p>
+          </div>
+        </section>
+
+        <section class="transaction-list">
+          {% if purchases %}
+            {% for tx in purchases %}
+              <div class="transaction-card">
+                <div>
+                  <strong>{{ tx["make"] }} {{ tx["model"] }} {{ tx["year"] }}</strong>
+                  <div class="transaction-meta">
+                    Seller:
+                    {% set seller = profiles.get(tx["seller_id"]) %}
+                    {% if seller %}
+                      <a href="{{ url_for('seller_profile', seller_id=tx['seller_id'], username=username) }}">
+                        {{ seller["first_name"] }} {{ seller["last_name"] }}
+                      </a>
+                    {% else %}
+                      -
+                    {% endif %}
+                  </div>
+                  <div class="transaction-meta">Status: {{ tx["status"] }}</div>
+                  <div class="transaction-meta">Completed: {{ tx["completed_at"] }}</div>
+                </div>
+                {% set rating = rating_tx_map.get(tx["id"]) %}
+                {% if rating %}
+                  <div class="rating-grid">
+                    <div>Reliability: {{ rating[1] }}/5</div>
+                    <div>Accuracy: {{ rating[2] }}/5</div>
+                    <div>Communication: {{ rating[3] }}/5</div>
+                    <div>Product: {{ rating[4] }}/5</div>
+                    {% if rating[5] %}
+                      <div>Comment: {{ rating[5] }}</div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="transaction-meta">No ratings yet</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No purchases yet</h3>
+            </div>
+          {% endif %}
+        </section>
+
+        <section class="section-header" style="margin-top: 24px;">
+          <div>
+            <h1>Completed sales</h1>
+            <p>Transactions completed by this seller.</p>
+          </div>
+        </section>
+
+        <section class="transaction-list">
+          {% if sales %}
+            {% for tx in sales %}
+              <div class="transaction-card">
+                <div>
+                  <strong>{{ tx["make"] }} {{ tx["model"] }} {{ tx["year"] }}</strong>
+                  <div class="transaction-meta">
+                    Buyer:
+                    {% set buyer_profile = profiles.get(tx["buyer_id"]) %}
+                    {% if buyer_profile %}{{ buyer_profile["first_name"] }} {{ buyer_profile["last_name"] }}{% else %}-{% endif %}
+                  </div>
+                  <div class="transaction-meta">Status: {{ tx["status"] }}</div>
+                  <div class="transaction-meta">Completed: {{ tx["completed_at"] }}</div>
+                </div>
+                {% set rating = rating_tx_map.get(tx["id"]) %}
+                {% if rating %}
+                  <div class="rating-grid">
+                    <div>Reliability: {{ rating[1] }}/5</div>
+                    <div>Accuracy: {{ rating[2] }}/5</div>
+                    <div>Communication: {{ rating[3] }}/5</div>
+                    <div>Product: {{ rating[4] }}/5</div>
+                    {% if rating[5] %}
+                      <div>Comment: {{ rating[5] }}</div>
+                    {% endif %}
+                  </div>
+                {% else %}
+                  <div class="transaction-meta">No ratings yet</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No completed sales</h3>
+              <p>There are no completed transactions yet.</p>
+            </div>
+          {% endif %}
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

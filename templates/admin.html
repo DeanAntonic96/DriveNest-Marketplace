@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card" href="{{ url_for('catalog', username=username) }}">Cars</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Admin</span>
+            <span class="profile-name">{{ user["first_name"] }} {{ user["last_name"] }}</span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="section-header">
+          <div>
+            <h1>Admin panel</h1>
+            <p>Manage users, listings, and ratings.</p>
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h2>Users</h2>
+          <div class="transaction-list">
+            {% for u in users %}
+              <div class="transaction-card">
+                <div>
+                  <strong>{{ u["first_name"] }} {{ u["last_name"] }}</strong>
+                  <div class="transaction-meta">{{ u["username"] }} · {{ u["email"] }}</div>
+                </div>
+                <form method="post" action="{{ url_for('admin_verify_user') }}">
+                  <input type="hidden" name="user_id" value="{{ u['id'] }}" />
+                  <input type="hidden" name="value" value="{{ 0 if u['verified'] else 1 }}" />
+                  <button class="btn" type="submit">
+                    {% if u["verified"] %}Unverify{% else %}Verify{% endif %}
+                  </button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h2>Listings</h2>
+          <div class="transaction-list">
+            {% for c in cars %}
+              <div class="transaction-card">
+                <div>
+                  <strong>{{ c["make"] }} {{ c["model"] }} {{ c["year"] }}</strong>
+                  <div class="transaction-meta">Car ID: {{ c["id"] }}</div>
+                </div>
+                <form method="post" action="{{ url_for('admin_delete_car') }}">
+                  <input type="hidden" name="car_id" value="{{ c['id'] }}" />
+                  <button class="btn1" type="submit">Delete</button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="admin-section">
+          <h2>Ratings</h2>
+          <div class="transaction-list">
+            {% for r in ratings %}
+              <div class="transaction-card">
+                <div>
+                  <strong>Rating #{{ r["id"] }}</strong>
+                  <div class="transaction-meta">Transaction: {{ r["transaction_id"] }}</div>
+                  <div class="transaction-meta">
+                    Reliability {{ r["reliability"] }} · Accuracy {{ r["accuracy"] }} ·
+                    Communication {{ r["communication"] }} · Product {{ r["product"] }}
+                  </div>
+                  {% if r["comment"] %}
+                    <div class="transaction-meta">Comment: {{ r["comment"] }}</div>
+                  {% endif %}
+                </div>
+                <form method="post" action="{{ url_for('admin_delete_rating') }}">
+                  <input type="hidden" name="rating_id" value="{{ r['id'] }}" />
+                  <button class="btn1" type="submit">Delete</button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

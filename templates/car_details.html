@@ -1,0 +1,459 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Listing</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card" href="{{ url_for('catalog', username=username) }}">Cars</a>
+          <a class="nav-card compare-link" id="compare-link" href="{{ url_for('compare') }}">Compare</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Welcome</span>
+            <span class="profile-name">
+              {% if user %}{{ user["first_name"] }} {{ user["last_name"] }}{% else %}Guest{% endif %}
+            </span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('messages') }}">
+              Messages
+              {% if unread_count %}
+                <span class="badge-count">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+            {% if user and user["is_admin"] %}
+              <a class="profile-link" href="{{ url_for('admin_panel') }}">Admin</a>
+            {% endif %}
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content details-layout">
+        <section class="details-card">
+          <div class="details-header">
+            <div>
+              <div class="posted-by">
+                Posted by:
+                {% if seller %}
+                  <a href="{{ url_for('seller_profile', seller_id=seller['id'], username=username) }}">
+                    {{ seller["first_name"] }} {{ seller["last_name"] }}
+                  </a>
+                {% else %}
+                  -
+                {% endif %}
+              </div>
+              <h1>{{ car["make"] }} {{ car["model"] }} {{ car["year"] }}</h1>
+              <div class="details-sub">
+                {% if badges %}
+                  <div class="badges">
+                    {% for badge in badges %}
+                      <span class="badge">{{ badge }}</span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                <form class="favorite-form" method="post" action="{{ url_for('toggle_favorite', car_id=car['id']) }}">
+                  <input type="hidden" name="next" value="{{ request.full_path }}" />
+                  <button class="favorite-btn {% if is_favorite %}saved{% endif %}" type="submit">
+                    {% if is_favorite %}Saved{% else %}Save{% endif %}
+                  </button>
+                </form>
+              </div>
+            </div>
+          <div class="details-actions details-actions-row">
+            <button class="compare-toggle" type="button" id="compare-toggle">Add to compare</button>
+            <a class="btn ghost" href="{{ url_for('car_pdf', car_id=car['id'], username=username) }}">Download PDF</a>
+            {% if user and not is_owner %}
+              <a class="btn ghost" href="{{ url_for('new_message', car_id=car['id'], username=username) }}">Contact seller</a>
+            {% endif %}
+            {% if is_owner and car["status"] == "active" %}
+              <a class="btn ghost" href="{{ url_for('edit_car', car_id=car['id'], username=username) }}">Edit</a>
+              <button class="btn1" type="button" id="remove-open">Remove</button>
+            {% endif %}
+          </div>
+          </div>
+
+          {% if images %}
+            <p class="details-thumbs-label">Photos</p>
+            <div class="details-gallery" id="thumbs">
+              {% for img in images %}
+                <img
+                  src="{{ url_for('static', filename=img['file_path']) }}"
+                  alt="Car photo"
+                  data-src="{{ url_for('static', filename=img['file_path']) }}"
+                />
+              {% endfor %}
+            </div>
+          {% else %}
+            <img class="car-photo-img" src="{{ url_for('static', filename=default_car_image) }}" alt="Default car image" />
+          {% endif %}
+
+          <div class="details-grid">
+            <div>
+              <h3>Price</h3>
+              <p>€{{ "{:,}".format(car["price"]).replace(",", ".") }}</p>
+            </div>
+            <div>
+              <h3>Mileage</h3>
+              <p>{{ "{:,}".format(car["mileage"]).replace(",", ".") }} km</p>
+            </div>
+            <div>
+              <h3>Make</h3>
+              <p>{{ car["make"] }}</p>
+            </div>
+            <div>
+              <h3>Model</h3>
+              <p>{{ car["model"] }}</p>
+            </div>
+            <div>
+              <h3>Color</h3>
+              <p>{{ car["color"] }}</p>
+            </div>
+            <div>
+              <h3>Fuel</h3>
+              <p>{{ car["fuel"] }}</p>
+            </div>
+            <div>
+              <h3>Transmission</h3>
+              <p>{{ car["transmission"] }}</p>
+            </div>
+            <div>
+              <h3>Body style</h3>
+              <p>{{ car["body_style"] }}</p>
+            </div>
+            <div>
+              <h3>City</h3>
+              <p>{{ car["city"] or "-" }}</p>
+            </div>
+            <div>
+              <h3>Country</h3>
+              <p>{{ car["country"] or "-" }}</p>
+            </div>
+            <div>
+              <h3>Phone</h3>
+              <p>{{ car["phone"] or "-" }}</p>
+            </div>
+            <div>
+              <h3>Seller</h3>
+              <p>
+                {% if seller %}
+                  {{ seller["first_name"] }} {{ seller["last_name"] }}
+                  {% if seller["verified"] %}<span class="verified-badge">Verified</span>{% endif %}
+                {% else %}
+                  -
+                {% endif %}
+              </p>
+            </div>
+            <div>
+              <h3>Seller rating</h3>
+              <p>
+                {% if seller_rating %}
+                  {{ "%.1f"|format(seller_rating[0]) }}/5 ({{ seller_rating[1] }})
+                {% else %}
+                  No ratings
+                {% endif %}
+              </p>
+            </div>
+          </div>
+
+          <div class="details-description details-block">
+            <h3>Description</h3>
+            <p>{{ car["description"] }}</p>
+          </div>
+
+          <div class="details-description details-block">
+            <h3>Rate calculator</h3>
+            <button class="btn" type="button" id="rate-open">Open calculator</button>
+          </div>
+        </section>
+
+        {% if similar_cars %}
+          <section class="details-description details-block">
+            <h3>Similar cars</h3>
+            <div class="catalog-grid">
+              {% for item in similar_cars %}
+                <article class="car-card">
+                  {% if item["image_path"] %}
+                    <img
+                      class="car-photo-img"
+                      src="{{ url_for('static', filename=item['image_path']) }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename=default_car_image) }}';"
+                      alt="{{ item['make'] }} {{ item['model'] }}"
+                    />
+                  {% else %}
+                    <img class="car-photo-img" src="{{ url_for('static', filename=default_car_image) }}" alt="Default car image" />
+                  {% endif %}
+                  <div class="car-body">
+                    <h3>{{ item["make"] }} {{ item["model"] }} {{ item["year"] }}</h3>
+                    <p class="car-meta">{{ "{:,}".format(item["mileage"]).replace(",", ".") }} km</p>
+                    <p class="car-meta">{{ item["city"] or "-" }}</p>
+                    <div class="car-footer">
+                      <span class="price">€{{ "{:,}".format(item["price"]).replace(",", ".") }}</span>
+                      <a class="btn ghost" href="{{ url_for('car_details', car_id=item['id'], username=username) }}">
+                        Details
+                      </a>
+                    </div>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          </section>
+        {% endif %}
+      </main>
+    </div>
+
+    <div class="image-modal" id="image-modal" aria-hidden="true">
+      <div class="image-modal-content">
+        <div class="modal-image-frame">
+          <img id="modal-image" src="" alt="Car photo preview" />
+        </div>
+        <div class="modal-actions">
+          <button class="btn" type="button" id="prev-image">Prev</button>
+          <button class="btn" type="button" id="close-image">Close</button>
+          <button class="btn" type="button" id="next-image">Next</button>
+        </div>
+      </div>
+    </div>
+
+    {% if is_owner and car["status"] == "active" %}
+      <dialog class="remove-dialog" id="remove-dialog">
+        <div class="remove-dialog-card">
+          <h3>Remove listing</h3>
+          <p>Choose what to do with this listing.</p>
+          <div class="remove-dialog-actions">
+            <form
+              action="{{ url_for('complete_car', car_id=car['id'], username=username) }}"
+              method="post"
+              class="complete-form"
+            >
+              <label>
+                Buyer profile
+                <select name="buyer_id" required>
+                  <option value="" selected disabled>Select buyer</option>
+                  {% for buyer in buyers %}
+                    <option value="{{ buyer['id'] }}">{{ buyer['first_name'] }} {{ buyer['last_name'] }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <button class="btn" type="submit">Completed</button>
+            </form>
+            <form
+              action="{{ url_for('delete_car', car_id=car['id'], username=username) }}"
+              method="post"
+            >
+              <button class="btn1" type="submit">Delete</button>
+            </form>
+            <button class="btn ghost" type="button" data-close-dialog>Cancel</button>
+          </div>
+        </div>
+      </dialog>
+    {% endif %}
+
+    <dialog class="remove-dialog" id="rate-dialog">
+      <div class="remove-dialog-card">
+        <h3>Rate calculator</h3>
+        <form class="rate-form" id="rate-form">
+          <label>
+            Price (EUR)
+            <input type="number" name="price" value="{{ car['price'] }}" />
+          </label>
+          <label>
+            Down payment (EUR)
+            <input type="number" name="down" value="0" />
+          </label>
+          <label>
+            Interest (%)
+            <input type="number" name="interest" value="6.5" step="0.1" />
+          </label>
+          <label>
+            Months
+            <input type="number" name="months" value="60" />
+          </label>
+          <button class="btn" type="button" id="calc-btn">Calculate</button>
+          <p class="rate-result" id="rate-result">Estimated monthly: -</p>
+        </form>
+        <div class="remove-dialog-actions">
+          <button class="btn ghost" type="button" data-close-dialog>Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+      const thumbs = Array.from(document.querySelectorAll("#thumbs img"));
+      const modal = document.getElementById("image-modal");
+      const modalImg = document.getElementById("modal-image");
+      const prevBtn = document.getElementById("prev-image");
+      const nextBtn = document.getElementById("next-image");
+      const closeBtn = document.getElementById("close-image");
+      let currentIndex = 0;
+
+      function openModal(index) {
+        currentIndex = index;
+        modalImg.src = thumbs[currentIndex].dataset.src;
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+      }
+
+      function closeModal() {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+      }
+
+      function showNext() {
+        if (!thumbs.length) return;
+        currentIndex = (currentIndex + 1) % thumbs.length;
+        modalImg.src = thumbs[currentIndex].dataset.src;
+      }
+
+      function showPrev() {
+        if (!thumbs.length) return;
+        currentIndex = (currentIndex - 1 + thumbs.length) % thumbs.length;
+        modalImg.src = thumbs[currentIndex].dataset.src;
+      }
+
+      thumbs.forEach((img, index) => {
+        img.addEventListener("click", () => openModal(index));
+      });
+
+      if (prevBtn) prevBtn.addEventListener("click", showPrev);
+      if (nextBtn) nextBtn.addEventListener("click", showNext);
+      if (closeBtn) closeBtn.addEventListener("click", closeModal);
+      if (modal) {
+        modal.addEventListener("click", (event) => {
+          if (event.target === modal) closeModal();
+        });
+      }
+
+      const removeOpen = document.getElementById("remove-open");
+      const removeDialog = document.getElementById("remove-dialog");
+      if (removeOpen && removeDialog) {
+        removeOpen.addEventListener("click", () => {
+          removeDialog.showModal();
+        });
+        removeDialog.addEventListener("click", (event) => {
+          if (event.target === removeDialog) {
+            removeDialog.close();
+          }
+        });
+        const closeBtn = removeDialog.querySelector("[data-close-dialog]");
+        if (closeBtn) {
+          closeBtn.addEventListener("click", () => removeDialog.close());
+        }
+      }
+
+      const compareLink = document.getElementById("compare-link");
+      const compareBtn = document.getElementById("compare-toggle");
+      const compareKey = "compareCars";
+      const currentId = "{{ car['id'] }}";
+
+      function getCompareList() {
+        try {
+          return JSON.parse(localStorage.getItem(compareKey) || "[]");
+        } catch {
+          return [];
+        }
+      }
+
+      function setCompareList(list) {
+        localStorage.setItem(compareKey, JSON.stringify(list));
+      }
+
+      function updateCompareNav() {
+        const list = getCompareList();
+        if (compareLink) {
+          if (list.length >= 2) {
+            compareLink.style.display = "inline-flex";
+            compareLink.href = `/compare?ids=${list.slice(0, 2).join(",")}`;
+          } else {
+            compareLink.style.display = "none";
+          }
+        }
+        if (compareBtn) {
+          const selected = list.includes(currentId);
+          compareBtn.classList.toggle("selected", selected);
+          compareBtn.textContent = selected ? "Selected" : "Add to compare";
+        }
+      }
+
+      if (compareBtn) {
+        compareBtn.addEventListener("click", () => {
+          const list = getCompareList();
+          const index = list.indexOf(currentId);
+          if (index >= 0) {
+            list.splice(index, 1);
+          } else {
+            if (list.length >= 2) {
+              list.shift();
+            }
+            list.push(currentId);
+          }
+          setCompareList(list);
+          updateCompareNav();
+        });
+      }
+      updateCompareNav();
+
+      const rateOpen = document.getElementById("rate-open");
+      const rateDialog = document.getElementById("rate-dialog");
+      if (rateOpen && rateDialog) {
+        rateOpen.addEventListener("click", () => rateDialog.showModal());
+        rateDialog.addEventListener("click", (event) => {
+          if (event.target === rateDialog) rateDialog.close();
+        });
+        const rateClose = rateDialog.querySelector("[data-close-dialog]");
+        if (rateClose) {
+          rateClose.addEventListener("click", () => rateDialog.close());
+        }
+      }
+
+      const calcBtn = document.getElementById("calc-btn");
+      const rateResult = document.getElementById("rate-result");
+      if (calcBtn && rateResult) {
+        calcBtn.addEventListener("click", () => {
+          const form = document.getElementById("rate-form");
+          const price = Number(form.price.value || 0);
+          const down = Number(form.down.value || 0);
+          const interest = Number(form.interest.value || 0) / 100;
+          const months = Number(form.months.value || 0);
+          const principal = Math.max(price - down, 0);
+          if (!months || months <= 0) {
+            rateResult.textContent = "Estimated monthly: -";
+            return;
+          }
+          const monthlyRate = interest / 12;
+          let payment = 0;
+          if (monthlyRate === 0) {
+            payment = principal / months;
+          } else {
+            payment =
+              (principal * monthlyRate) /
+              (1 - Math.pow(1 + monthlyRate, -months));
+          }
+          rateResult.textContent = `Estimated monthly: €${payment.toFixed(2)}`;
+        });
+      }
+    </script>
+  </body>
+</html>

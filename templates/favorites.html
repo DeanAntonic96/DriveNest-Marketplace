@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Basic metadata -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Favorites</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card" href="{{ url_for('catalog', username=username) }}">Cars</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Welcome</span>
+            <span class="profile-name">
+              {% if user %}{{ user["first_name"] }} {{ user["last_name"] }}{% else %}Guest{% endif %}
+            </span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('messages') }}">
+              Messages
+              {% if unread_count %}
+                <span class="badge-count">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+            {% if user and user["is_admin"] %}
+              <a class="profile-link" href="{{ url_for('admin_panel') }}">Admin</a>
+            {% endif %}
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="section-header">
+          <div>
+            <h1>Favorites</h1>
+            <p>Cars you saved for later.</p>
+          </div>
+        </section>
+
+        <section class="catalog-grid">
+          {% if cars %}
+            {% for car in cars %}
+              <article class="car-card">
+                {% if car["image_path"] %}
+                  <img
+                    class="car-photo-img"
+                    src="{{ url_for('static', filename=car['image_path']) }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename=default_car_image) }}';"
+                    alt="{{ car['make'] }} {{ car['model'] }}"
+                  />
+                {% else %}
+                  <img class="car-photo-img" src="{{ url_for('static', filename=default_car_image) }}" alt="Default car image" />
+                {% endif %}
+                <div class="car-body">
+                  <h3>{{ car["make"] }} {{ car["model"] }} {{ car["year"] }}</h3>
+                  {% if badge_map.get(car["id"]) %}
+                    <div class="badges">
+                      {% for badge in badge_map.get(car["id"]) %}
+                        <span class="badge">{{ badge }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                  <p class="car-meta">
+                    {{ "{:,}".format(car["mileage"]).replace(",", ".") }} km
+                  </p>
+                  {% set rating = rating_map.get(car["user_id"]) %}
+                  {% if rating %}
+                    <p class="car-meta">Seller rating: {{ "%.1f"|format(rating[0]) }}/5</p>
+                  {% endif %}
+                  <p class="car-meta">{{ car["city"] or "-" }}</p>
+                  <div class="car-footer">
+                    <span class="price">€{{ "{:,}".format(car["price"]).replace(",", ".") }}</span>
+                    <div class="card-actions">
+                      <form class="favorite-form" method="post" action="{{ url_for('toggle_favorite', car_id=car['id']) }}">
+                        <input type="hidden" name="next" value="{{ request.full_path }}" />
+                        <button class="favorite-btn {% if car['id'] in favorite_ids %}saved{% endif %}" type="submit">
+                          {% if car["id"] in favorite_ids %}Saved{% else %}Save{% endif %}
+                        </button>
+                      </form>
+                      <a
+                        class="btn ghost"
+                        href="{{ url_for('car_details', car_id=car['id'], username=username) }}"
+                      >
+                        Details
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No favorites yet</h3>
+              <p>Save cars you like to see them here.</p>
+              <a class="btn" href="{{ url_for('catalog', username=username) }}">Browse cars</a>
+            </div>
+          {% endif %}
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

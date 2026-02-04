@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Conversation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card" href="{{ url_for('catalog', username=username) }}">Cars</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Welcome</span>
+            <span class="profile-name">
+              {% if user %}{{ user["first_name"] }} {{ user["last_name"] }}{% else %}Guest{% endif %}
+            </span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('messages') }}">
+              Messages
+              {% if unread_count %}
+                <span class="badge-count">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+            {% if user and user["is_admin"] %}
+              <a class="profile-link" href="{{ url_for('admin_panel') }}">Admin</a>
+            {% endif %}
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <section class="section-header">
+          <div>
+            <h1>Conversation</h1>
+            <p>
+              {% if seller and buyer %}
+                {{ seller["first_name"] }} {{ seller["last_name"] }} &mdash;
+                {{ buyer["first_name"] }} {{ buyer["last_name"] }}
+              {% endif %}
+            </p>
+          </div>
+        </section>
+
+        <section class="message-thread">
+          {% for msg in messages %}
+            <div class="message-bubble {% if msg['sender_id'] == user['id'] %}mine{% endif %}">
+              <div class="message-text">{{ msg["body"] }}</div>
+              <div class="message-meta">{{ msg["created_at"] }}</div>
+            </div>
+          {% endfor %}
+        </section>
+
+        <section class="message-form">
+          <form method="post">
+            <input type="text" name="body" placeholder="Type a message..." required />
+            <button class="btn" type="submit">Send</button>
+          </form>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

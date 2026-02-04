@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Basic metadata -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="card">
+        <!-- Page heading -->
+        <header class="card-header">
+          <h1>Register</h1>
+          <p>Create your account.</p>
+        </header>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="flash">
+              {% for message in messages %}
+                <li>{{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Registration form -->
+        <form method="post" class="form">
+          <!-- Name fields -->
+          <div class="row">
+            <label>
+              First Name
+              <input type="text" name="first_name" required />
+            </label>
+
+            <label>
+              Last Name
+              <input type="text" name="last_name" required />
+            </label>
+          </div>
+
+          <!-- Username -->
+          <label>
+            Username
+            <input type="text" name="username" autocomplete="username" required />
+          </label>
+
+          <!-- Email -->
+          <label>
+            Email
+            <input type="email" name="email" autocomplete="email" required />
+          </label>
+
+          <!-- Password fields -->
+          <div class="row">
+            <label>
+              Password
+              <input type="password" name="password" autocomplete="new-password" required />
+            </label>
+
+            <label>
+              Confirm Password
+              <input type="password" name="confirm_password" autocomplete="new-password" required />
+            </label>
+          </div>
+
+          <button type="submit" class="btn">Create Account</button>
+        </form>
+
+        <!-- Link to login -->
+        <p class="helper">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+      </section>
+    </main>
+  </body>
+</html>

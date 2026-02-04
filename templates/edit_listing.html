@@ -1,0 +1,199 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Edit listing</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card" href="{{ url_for('catalog', username=username) }}">Cars</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Welcome</span>
+            <span class="profile-name">
+              {% if user %}{{ user["first_name"] }} {{ user["last_name"] }}{% else %}Guest{% endif %}
+            </span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('messages') }}">
+              Messages
+              {% if unread_count %}
+                <span class="badge-count">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+            {% if user and user["is_admin"] %}
+              <a class="profile-link" href="{{ url_for('admin_panel') }}">Admin</a>
+            {% endif %}
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content form-layout">
+        <section class="form-card">
+          <h1>Edit listing</h1>
+          <p>Update listing details below.</p>
+
+          {% with messages = get_flashed_messages() %}
+            {% if messages %}
+              <ul class="flash">
+                {% for message in messages %}
+                  <li>{{ message }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          {% endwith %}
+
+          <form class="listing-form" method="post" enctype="multipart/form-data">
+            <div class="form-grid">
+              <label>
+                Price (EUR)
+                <input type="number" name="price" value="{{ car['price'] }}" required />
+              </label>
+              <label>
+                Year
+                <select name="year" required>
+                  {% for y in range(2026, 1984, -1) %}
+                    <option value="{{ y }}" {% if car['year'] == y %}selected{% endif %}>{{ y }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                Mileage (km)
+                <input type="number" name="mileage" value="{{ car['mileage'] }}" required />
+              </label>
+              <label>
+                Make
+                <select name="make" id="make-select" required>
+                  <option value="" disabled>Select make</option>
+                  {% for make in ["Audi","BMW","Mercedes-Benz","Volkswagen","Tesla","Skoda","Volvo","Peugeot","Hyundai","Renault","Opel","Seat"] %}
+                    <option value="{{ make }}" {% if car['make'] == make %}selected{% endif %}>{{ make }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                Model
+                <select name="model" id="model-select" data-selected="{{ car['model'] }}" required></select>
+              </label>
+              <label>
+                Color
+                <select name="color" required>
+                  {% for color in ["Black","White","Gray","Silver","Blue","Red","Green","Yellow","Brown","Orange"] %}
+                    <option value="{{ color }}" {% if car['color'] == color %}selected{% endif %}>{{ color }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                Fuel
+                <select name="fuel" required>
+                  {% for fuel in ["Gasoline","Diesel","Hybrid","Electric","LPG"] %}
+                    <option value="{{ fuel }}" {% if car['fuel'] == fuel %}selected{% endif %}>{{ fuel }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                Transmission
+                <select name="transmission" required>
+                  {% for t in ["Automatic","Manual","Semi-automatic"] %}
+                    <option value="{{ t }}" {% if car['transmission'] == t %}selected{% endif %}>{{ t }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+              <label>
+                Body style
+                <select name="body_style" required>
+                  {% for b in ["Sedan","SUV","Hatchback","Coupe","Convertible","Wagon","Pickup","Van"] %}
+                    <option value="{{ b }}" {% if car['body_style'] == b %}selected{% endif %}>{{ b }}</option>
+                  {% endfor %}
+                </select>
+              </label>
+            </div>
+
+            <label class="full-width">
+              Description
+              <textarea name="description" rows="4" required>{{ car['description'] }}</textarea>
+            </label>
+
+            <label class="full-width">
+              Add photos (max 15 total)
+              <input type="file" name="images" accept=".jpg,.jpeg,.png" multiple />
+            </label>
+
+            <button class="btn" type="submit">Save changes</button>
+          </form>
+        </section>
+      </main>
+    </div>
+    <script>
+      const modelsByMake = {
+        Audi: ["A3", "A4", "A6", "Q3", "Q5", "Q7"],
+        BMW: ["1 Series", "3 Series", "5 Series", "X1", "X3", "X5"],
+        "Mercedes-Benz": ["A-Class", "C-Class", "E-Class", "S-Class", "GLA", "GLE"],
+        Volkswagen: ["Golf", "Passat", "Tiguan", "Touareg", "Polo"],
+        Tesla: ["Model 3", "Model S", "Model X", "Model Y"],
+        Skoda: ["Octavia", "Superb", "Kodiaq", "Karoq", "Fabia"],
+        Volvo: ["XC40", "XC60", "XC90", "S60", "S90"],
+        Peugeot: ["208", "308", "3008", "508"],
+        Hyundai: ["i20", "i30", "Tucson", "Santa Fe", "Ioniq 5"],
+        Renault: ["Clio", "Megane", "Captur", "Kadjar"],
+        Opel: ["Astra", "Corsa", "Insignia", "Mokka"],
+        Seat: ["Ibiza", "Leon", "Ateca", "Arona"],
+      };
+
+      const makeSelect = document.getElementById("make-select");
+      const modelSelect = document.getElementById("model-select");
+
+      function resetModels() {
+        modelSelect.innerHTML = '<option value="" disabled>Select model</option>';
+        modelSelect.disabled = true;
+      }
+
+      function populateModels(make) {
+        resetModels();
+        const models = modelsByMake[make] || [];
+        models.forEach((model) => {
+          const option = document.createElement("option");
+          option.value = model;
+          option.textContent = model;
+          modelSelect.appendChild(option);
+        });
+        modelSelect.disabled = models.length === 0;
+        const selected = modelSelect.dataset.selected;
+        if (selected) {
+          modelSelect.value = selected;
+        }
+      }
+
+      if (makeSelect && modelSelect) {
+        makeSelect.addEventListener("change", (event) => {
+          populateModels(event.target.value);
+        });
+        if (makeSelect.value) {
+          populateModels(makeSelect.value);
+        }
+      }
+    </script>
+  </body>
+</html>

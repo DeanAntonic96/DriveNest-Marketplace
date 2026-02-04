@@ -1,0 +1,323 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Basic metadata -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ app_name }} - Catalog</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    {% set default_images = [default_car_image, default_car_image, default_car_image, default_car_image] %}
+    <div class="page car-page">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">DriveNest</span>
+          <span class="brand-sub">Marketplace</span>
+        </div>
+
+        <nav class="nav-cards">
+          <a class="nav-card" href="{{ url_for('main_page', username=username) }}">Home</a>
+          <a class="nav-card active" href="{{ url_for('catalog', username=username) }}">Cars</a>
+        </nav>
+
+        <div class="profile-card">
+          <div class="avatar">
+            <img
+              src="{{ url_for('static', filename=default_car_image) }}"
+              alt="Profile"
+              onload="this.nextElementSibling.style.display='none'"
+              onerror="this.style.display='none'"
+            />
+            <span class="avatar-fallback" aria-hidden="true"></span>
+          </div>
+          <div class="profile-meta">
+            <span class="profile-label">Welcome</span>
+            <span class="profile-name">
+              {% if user %}{{ user["first_name"] }} {{ user["last_name"] }}{% else %}Guest{% endif %}
+            </span>
+          </div>
+          <div class="profile-actions">
+            <a class="profile-link" href="{{ url_for('profile', username=username) }}">Profile</a>
+            <a class="profile-link" href="{{ url_for('messages') }}">
+              Messages
+              {% if unread_count %}
+                <span class="badge-count">{{ unread_count }}</span>
+              {% endif %}
+            </a>
+            {% if user and user["is_admin"] %}
+              <a class="profile-link" href="{{ url_for('admin_panel') }}">Admin</a>
+            {% endif %}
+            <a class="profile-link" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+        </div>
+      </header>
+
+      <main class="content catalog-layout">
+        <aside class="filter-card">
+          <h2>Filters</h2>
+          <form class="filter-form" method="get">
+            <input type="hidden" name="username" value="{{ username }}" />
+            <label>
+              Price from
+              <input type="number" name="price_min" placeholder="0" value="{{ filters.price_min }}" />
+            </label>
+            <label>
+              Price to
+              <input type="number" name="price_max" placeholder="50,000" value="{{ filters.price_max }}" />
+            </label>
+            <label>
+              Year from
+              <select name="year_min">
+                <option value="">Any year</option>
+                {% for y in range(2026, 1984, -1) %}
+                  <option value="{{ y }}" {% if filters.year_min == y|string %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              Mileage up to
+              <input type="number" name="mileage_max" placeholder="150,000" value="{{ filters.mileage_max }}" />
+            </label>
+            <label>
+              Make
+              <select name="make" id="make-select">
+                <option value="">All makes</option>
+                <option value="Audi" {% if filters.make == 'Audi' %}selected{% endif %}>Audi</option>
+                <option value="BMW" {% if filters.make == 'BMW' %}selected{% endif %}>BMW</option>
+                <option value="Mercedes-Benz" {% if filters.make == 'Mercedes-Benz' %}selected{% endif %}>Mercedes-Benz</option>
+                <option value="Volkswagen" {% if filters.make == 'Volkswagen' %}selected{% endif %}>Volkswagen</option>
+                <option value="Tesla" {% if filters.make == 'Tesla' %}selected{% endif %}>Tesla</option>
+                <option value="Skoda" {% if filters.make == 'Skoda' %}selected{% endif %}>Skoda</option>
+                <option value="Volvo" {% if filters.make == 'Volvo' %}selected{% endif %}>Volvo</option>
+                <option value="Peugeot" {% if filters.make == 'Peugeot' %}selected{% endif %}>Peugeot</option>
+                <option value="Hyundai" {% if filters.make == 'Hyundai' %}selected{% endif %}>Hyundai</option>
+                <option value="Renault" {% if filters.make == 'Renault' %}selected{% endif %}>Renault</option>
+                <option value="Opel" {% if filters.make == 'Opel' %}selected{% endif %}>Opel</option>
+                <option value="Seat" {% if filters.make == 'Seat' %}selected{% endif %}>Seat</option>
+              </select>
+            </label>
+            <label>
+              Model
+              <select
+                name="model"
+                id="model-select"
+                data-selected="{{ filters.model }}"
+                {% if not filters.make %}disabled{% endif %}
+              >
+                <option value="">{% if filters.make %}All models{% else %}Select make first{% endif %}</option>
+              </select>
+            </label>
+            <label>
+              Color
+              <select name="color">
+                <option value="">All colors</option>
+                <option value="Black" {% if filters.color == 'Black' %}selected{% endif %}>Black</option>
+                <option value="White" {% if filters.color == 'White' %}selected{% endif %}>White</option>
+                <option value="Gray" {% if filters.color == 'Gray' %}selected{% endif %}>Gray</option>
+                <option value="Silver" {% if filters.color == 'Silver' %}selected{% endif %}>Silver</option>
+                <option value="Blue" {% if filters.color == 'Blue' %}selected{% endif %}>Blue</option>
+                <option value="Red" {% if filters.color == 'Red' %}selected{% endif %}>Red</option>
+                <option value="Green" {% if filters.color == 'Green' %}selected{% endif %}>Green</option>
+                <option value="Yellow" {% if filters.color == 'Yellow' %}selected{% endif %}>Yellow</option>
+                <option value="Brown" {% if filters.color == 'Brown' %}selected{% endif %}>Brown</option>
+                <option value="Orange" {% if filters.color == 'Orange' %}selected{% endif %}>Orange</option>
+              </select>
+            </label>
+            <label>
+              Fuel
+              <select name="fuel">
+                <option value="">All fuels</option>
+                <option value="Gasoline" {% if filters.fuel == 'Gasoline' %}selected{% endif %}>Gasoline</option>
+                <option value="Diesel" {% if filters.fuel == 'Diesel' %}selected{% endif %}>Diesel</option>
+                <option value="Hybrid" {% if filters.fuel == 'Hybrid' %}selected{% endif %}>Hybrid</option>
+                <option value="Electric" {% if filters.fuel == 'Electric' %}selected{% endif %}>Electric</option>
+                <option value="LPG" {% if filters.fuel == 'LPG' %}selected{% endif %}>LPG</option>
+              </select>
+            </label>
+            <label>
+              Transmission
+              <select name="transmission">
+                <option value="">All transmissions</option>
+                <option value="Automatic" {% if filters.transmission == 'Automatic' %}selected{% endif %}>Automatic</option>
+                <option value="Manual" {% if filters.transmission == 'Manual' %}selected{% endif %}>Manual</option>
+                <option value="Semi-automatic" {% if filters.transmission == 'Semi-automatic' %}selected{% endif %}>Semi-automatic</option>
+              </select>
+            </label>
+            <label>
+              Body style
+              <select name="body_style">
+                <option value="">All body styles</option>
+                <option value="Sedan" {% if filters.body_style == 'Sedan' %}selected{% endif %}>Sedan</option>
+                <option value="SUV" {% if filters.body_style == 'SUV' %}selected{% endif %}>SUV</option>
+                <option value="Hatchback" {% if filters.body_style == 'Hatchback' %}selected{% endif %}>Hatchback</option>
+                <option value="Coupe" {% if filters.body_style == 'Coupe' %}selected{% endif %}>Coupe</option>
+                <option value="Convertible" {% if filters.body_style == 'Convertible' %}selected{% endif %}>Convertible</option>
+                <option value="Wagon" {% if filters.body_style == 'Wagon' %}selected{% endif %}>Wagon</option>
+                <option value="Pickup" {% if filters.body_style == 'Pickup' %}selected{% endif %}>Pickup</option>
+                <option value="Van" {% if filters.body_style == 'Van' %}selected{% endif %}>Van</option>
+              </select>
+            </label>
+            <label>
+              City
+              <input type="text" name="city" placeholder="Sarajevo, Mostar..." value="{{ filters.city }}" />
+            </label>
+            <button class="btn">Apply filters</button>
+            <button class="btn" href="{{ url_for('catalog', username=username) }}">Reset</button>
+          </form>
+        </aside>
+
+        <section class="catalog-grid" id="catalog-grid">
+          {% if cars %}
+            {% for car in cars %}
+              <article
+                class="car-card"
+                data-card
+              >
+                {% if car["image_path"] %}
+                  <img
+                    class="car-photo-img"
+                    src="{{ url_for('static', filename=car['image_path']) }}" onerror="this.onerror=null;this.src='{{ url_for('static', filename=default_car_image) }}';"
+                    alt="{{ car['make'] }} {{ car['model'] }}"
+                  />
+                {% else %}
+                  {% set fallback_index = (car["id"] | int) % (default_images | length) %}
+                  <img
+                    class="car-photo-img"
+                    src="{{ url_for('static', filename=default_images[fallback_index]) }}"
+                    alt="Default car image"
+                  />
+                {% endif %}
+                <div class="car-body">
+                  <h3>{{ car["make"] }} {{ car["model"] }} {{ car["year"] }}</h3>
+                  {% if badge_map.get(car["id"]) %}
+                    <div class="badges">
+                      {% for badge in badge_map.get(car["id"]) %}
+                        <span class="badge">{{ badge }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                  <p class="car-meta">
+                    {{ "{:,}".format(car["mileage"]).replace(",", ".") }} km
+                  </p>
+                  {% set rating = rating_map.get(car["user_id"]) %}
+                  {% if rating %}
+                    <p class="car-meta">Seller rating: {{ "%.1f"|format(rating[0]) }}/5</p>
+                  {% endif %}
+                  <p class="car-meta">{{ car["city"] or "-" }}</p>
+                  <div class="car-footer">
+                    <span class="price">€{{ "{:,}".format(car["price"]).replace(",", ".") }}</span>
+                    <div class="card-actions">
+                      <form class="favorite-form" method="post" action="{{ url_for('toggle_favorite', car_id=car['id']) }}">
+                        <input type="hidden" name="next" value="{{ request.full_path }}" />
+                        <button class="favorite-btn {% if car['id'] in favorite_ids %}saved{% endif %}" type="submit">
+                          {% if car["id"] in favorite_ids %}Saved{% else %}Save{% endif %}
+                        </button>
+                      </form>
+                      <a
+                        class="btn ghost"
+                        href="{{ url_for('car_details', car_id=car['id'], username=username) }}"
+                      >
+                        Details
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <h3>No listings yet</h3>
+              <p>Be the first to publish a car listing.</p>
+              <a class="btn" href="{{ url_for('add_listing', username=username) }}">Add listing</a>
+            </div>
+          {% endif %}
+        </section>
+        {% if cars %}
+          <div class="load-more">
+            <button class="btn pill-btn" id="load-more">See more</button>
+          </div>
+        {% endif %}
+      </main>
+    </div>
+    
+    <script>
+      const modelsByMake = {
+        Audi: ["A3", "A4", "A6", "Q3", "Q5", "Q7"],
+        BMW: ["1 Series", "3 Series", "5 Series", "X1", "X3", "X5"],
+        "Mercedes-Benz": ["A-Class", "C-Class", "E-Class", "S-Class", "GLA", "GLE"],
+        Volkswagen: ["Golf", "Passat", "Tiguan", "Touareg", "Polo"],
+        Tesla: ["Model 3", "Model S", "Model X", "Model Y"],
+        Skoda: ["Octavia", "Superb", "Kodiaq", "Karoq", "Fabia"],
+        Volvo: ["XC40", "XC60", "XC90", "S60", "S90"],
+        Peugeot: ["208", "308", "3008", "508"],
+        Hyundai: ["i20", "i30", "Tucson", "Santa Fe", "Ioniq 5"],
+        Renault: ["Clio", "Megane", "Captur", "Kadjar"],
+        Opel: ["Astra", "Corsa", "Insignia", "Mokka"],
+        Seat: ["Ibiza", "Leon", "Ateca", "Arona"],
+      };
+
+      const makeSelect = document.getElementById("make-select");
+      const modelSelect = document.getElementById("model-select");
+
+      function resetModels() {
+        modelSelect.innerHTML = '<option value="">All models</option>';
+        modelSelect.disabled = true;
+      }
+
+      function populateModels(make) {
+        resetModels();
+        const models = modelsByMake[make] || [];
+        models.forEach((model) => {
+          const option = document.createElement("option");
+          option.value = model;
+          option.textContent = model;
+          modelSelect.appendChild(option);
+        });
+        modelSelect.disabled = models.length === 0;
+        const selected = modelSelect.dataset.selected;
+        if (selected) {
+          modelSelect.value = selected;
+        }
+      }
+
+      if (makeSelect && modelSelect) {
+        makeSelect.addEventListener("change", (event) => {
+          populateModels(event.target.value);
+        });
+        if (makeSelect.value) {
+          populateModels(makeSelect.value);
+        } else {
+          resetModels();
+          modelSelect.innerHTML = '<option value="">Select make first</option>';
+        }
+      }
+
+      const cards = Array.from(document.querySelectorAll("[data-card]"));
+      const button = document.getElementById("load-more");
+      const step = 16;
+      let shown = 0;
+
+      function updateVisibility() {
+        cards.forEach((card, index) => {
+          card.style.display = index < shown ? "flex" : "none";
+        });
+        if (button) {
+          button.style.display = shown >= cards.length ? "none" : "inline-flex";
+        }
+      }
+
+      if (cards.length) {
+        shown = Math.min(step, cards.length);
+        updateVisibility();
+      }
+
+      if (button) {
+        button.addEventListener("click", () => {
+          shown = Math.min(shown + step, cards.length);
+          updateVisibility();
+        });
+      }
+    </script>
+  </body>
+</html>
